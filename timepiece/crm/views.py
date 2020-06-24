@@ -5,8 +5,9 @@ from six.moves.urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse, reverse_lazy
+# from django.contrib.auth.models import User
+# from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponseRedirect, HttpResponseForbidden, Http404
@@ -30,6 +31,9 @@ from timepiece.crm.models import Business, Project, ProjectRelationship
 from timepiece.crm.utils import grouped_totals
 from timepiece.entries.models import Entry
 
+# i added this
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 @cbv_decorator(login_required)
 class QuickSearch(FormView):
@@ -81,6 +85,7 @@ def reject_user_timesheet(request, user_id):
 def view_user_timesheet(request, user_id, active_tab):
     # User can only view their own time sheet unless they have a permission.
     user = get_object_or_404(User, pk=user_id)
+    # print (user)
     has_perm = request.user.has_perm('entries.view_entry_summary')
     if not (has_perm or user.pk == request.user.pk):
         return HttpResponseForbidden('Forbidden')
@@ -112,6 +117,7 @@ def view_user_timesheet(request, user_id, active_tab):
         to_date = from_date + relativedelta(months=1)
 
     entries_qs = Entry.objects.filter(user=user)
+    print (entries_qs)
     month_qs = entries_qs.timespan(from_date, span='month')
     extra_values = ('start_time', 'end_time', 'comments', 'seconds_paused',
                     'id', 'location__name', 'project__name', 'activity__name',
@@ -282,7 +288,8 @@ class ProjectTimesheet(DetailView):
         total = entries_qs.aggregate(hours=Sum('hours'))['hours']
         if total:
             total = "{0:.2f}".format(total)
-        user_entries = entries_qs.order_by().values('user__first_name', 'user__last_name')
+        # user_entries = entries_qs.order_by().values('user__first_name', 'user__last_name')
+        user_entries = entries_qs.order_by().values('user__name')
         user_entries = user_entries.annotate(sum=Sum('hours')).order_by('-sum')
         if user_entries:
             format_totals(user_entries)

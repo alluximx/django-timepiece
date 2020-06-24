@@ -1,0 +1,101 @@
+<!doctype html>
+<body>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+    {% load staticfiles %}
+    {% load thumbnail %}
+    {% load crispy_forms_tags %}
+
+
+      <!-- Bootstrap core CSS -->
+  <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!-- CSS specific to pinentry -->
+  <link rel="stylesheet" href="{% static 'pinentry/css/pinentry.css' %}">
+
+    <input type="hidden" name="useremail" id="id_useremail" value={{username }}>
+
+</head>
+<body>
+    <div id="pin" class="pin">{% csrf_token %}
+        <div class="table">
+            <div class="cell">
+                <div class="EmployeeAvatar">
+                    {% if user_status == "on_pause" %}
+                          <div class="frame1">
+                            <img title="profile picture1" class="img-profilepic border-orange " src="{% thumbnail show_user.profile.picture|default:'default_profile.png' 240x240 crop %}">
+                          </div>
+                    {% elif user_status == "on_clock" %}
+                          <div class="frame1">
+                            <img title="profile picture1" class="img-profilepic border-green " src="{% thumbnail show_user.profile.picture|default:'default_profile.png' 240x240 crop %}">
+                          </div>
+                    {% else %}
+                        <div class="frame1">
+                            <img title="profile picture1" class="img-profilepic border-red " src="{% thumbnail show_user.profile.picture|default:'default_profile.png' 240x240 crop %}">
+                        </div>
+                    {% endif %}
+                        <div class="employeeName">{{show_user.name}}</div>
+                </div>
+
+
+
+                <div class="timeClock">
+                    <div class="timeDisplay">
+                        <h2 class="currentTime" id="clock">{{time_now|time:"H:i:s"}}</h2>
+                        <h2 class="currentDate" id="date">{{time_now|date}}</h2>
+                    </div>
+                </div>
+
+
+
+                <div class="Pinentry">
+                </div>
+
+
+                <div id="fields">
+                    {% if perms.entries.can_clock_in %}
+                        <div class="row-fluid">
+                            <div class="span12" id="active-entry">
+                                <div id="active-buttons">
+                                    <div class="pull-left">
+                                         <form class="form-horizontal prevent-doubleclick" accept-charset="utf-8" id="clockoutForm" name="clockOutForm" action='{% url "quickclock_out" %}' method="post">
+                                            {% csrf_token %}
+                                            {{ form|crispy }}
+                                            <div class="form-actions">
+                                                <input class="btn btn-danger" type="submit" name="submit" value="Clock Out" />
+                                                <input class="btn" type="button" value="Cancel" onclick="history.back()" />
+                                            </div>
+                                         </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div id="numbers" class="numbers">
+                    <div class="grid">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+
+
+
+  {% csrf_token %}
+   <!-- javascipt specific to pinentry -->
+<script src="{% static 'site/js/jquery-3.5.1.min.js' %}"></script>
+<script src="{% static 'pinentry/js/pinentry.js' %}"></script>
+<script src="{% static 'CustomDashboard/js/customdash.js' %}"></script>
+
+

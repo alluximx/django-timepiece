@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from timepiece.crm.models import (
-    Attribute, Business, Project, RelationshipType, UserProfile)
+    Attribute, Business, Project, RelationshipType, UserProfile,ProjectRelationship)
 
 
 class AttributeAdmin(admin.ModelAdmin):
@@ -29,6 +29,11 @@ class RelationshipTypeAdmin(admin.ModelAdmin):
     pass
 
 
+#i added this
+class ProjectRelationshipAdmin (admin.ModelAdmin):
+    pass
+
+
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'hours_per_week')
 
@@ -38,3 +43,6 @@ admin.site.register(Business, BusinessAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(RelationshipType, RelationshipTypeAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
+
+#i added this
+admin.site.register(ProjectRelationship, ProjectRelationshipAdmin)

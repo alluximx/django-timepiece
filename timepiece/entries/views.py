@@ -12,7 +12,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
-from django.core.urlresolvers import reverse
+# from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -31,9 +32,16 @@ from timepiece.entries.forms import (
     ProjectHoursSearchForm)
 from timepiece.entries.models import Entry, ProjectHours
 
+# from django.contrib.auth import get_user_model
+# User = get_user_model()
+
+#i added this
+from facelogin.views import get_user_status
+
 
 class Dashboard(TemplateView):
-    template_name = 'timepiece/dashboard.html'
+    # template_name = 'timepiece/dashboard.html'
+    template_name = 'timepiece/entry/myCustomDashboard.html'
 
     @method_decorator(login_required)
     def dispatch(self, request, active_tab, *args, **kwargs):
@@ -84,7 +92,6 @@ class Dashboard(TemplateView):
         others_active_entries = Entry.objects.filter(end_time__isnull=True)
         others_active_entries = others_active_entries.exclude(user=self.user)
         others_active_entries = others_active_entries.select_related('user', 'project', 'activity')
-
         return {
             'active_tab': self.active_tab,
             'today': today,
@@ -96,6 +103,10 @@ class Dashboard(TemplateView):
             'project_progress': project_progress,
             'week_entries': week_entries,
             'others_active_entries': others_active_entries,
+
+            #i added this
+            'show_user': self.user,
+            'user_status': get_user_status(self.user.pk)
         }
 
     def process_progress(self, entries, assignments):
@@ -137,15 +148,20 @@ class Dashboard(TemplateView):
 @permission_required('entries.can_clock_in')
 @transaction.atomic
 def clock_in(request):
+    # print (request.user)
     """For clocking the user into a project."""
     user = request.user
     # Lock the active entry for the duration of this transaction, to prevent
     # creating multiple active entries.
     active_entry = utils.get_active_entry(user, select_for_update=True)
+    # print (active_entry)
 
     initial = dict([(k, v) for k, v in request.GET.items()])
+    # print (initial)
     data = request.POST or None
+    # print (data)
     form = ClockInForm(data, initial=initial, user=user, active=active_entry)
+    # print (form)
     if form.is_valid():
         entry = form.save()
         message = 'You have clocked into {0} on {1}.'.format(
@@ -153,15 +169,25 @@ def clock_in(request):
         messages.info(request, message)
         return HttpResponseRedirect(reverse('dashboard'))
 
-    return render(request, 'timepiece/entry/clock_in.html', {
+    context = {
         'form': form,
         'active': active_entry,
-    })
+
+        #i added this
+        'show_user': request.user,
+        'user_status': get_user_status(request.user.pk)
+    }
+
+    return render(request, 'timepiece/entry/quick_clock_in.html', context)
+
+
 
 
 @permission_required('entries.can_clock_out')
 def clock_out(request):
     entry = utils.get_active_entry(request.user)
+
+    # print (active_entry)
     if not entry:
         message = "Not clocked in"
         messages.info(request, message)
@@ -177,12 +203,28 @@ def clock_out(request):
         else:
             message = 'Please correct the errors below.'
             messages.error(request, message)
+            context = {
+                'form': form,
+                'entry': entry,
+
+                #i added this
+                'show_user': request.user,
+                'user_status': get_user_status(request.user.pk)
+            }
+
+            return render(request, 'timepiece/entry/error_quick_clock_out.html', context )
     else:
         form = ClockOutForm(instance=entry)
-    return render(request, 'timepiece/entry/clock_out.html', {
+
+    context = {
         'form': form,
         'entry': entry,
-    })
+
+        #i added this
+        'show_user': request.user,
+        'user_status': get_user_status(request.user.pk)
+    }
+    return render(request, 'timepiece/entry/quick_clock_out.html', context )
 
 
 @permission_required('entries.can_pause')
@@ -244,11 +286,12 @@ def create_edit_entry(request, entry_id=None):
                                   user=entry_user,
                                   initial=initial,
                                   acting_user=request.user)
-
-    return render(request, 'timepiece/entry/create_edit.html', {
+    context = {
         'form': form,
         'entry': entry,
-    })
+    }
+
+    return render(request, 'timepiece/entry/create_edit.html', context)
 
 
 @permission_required('entries.view_payroll_summary')
@@ -276,10 +319,12 @@ def reject_entry(request, entry_id):
         msg_text = 'The entry\'s status was set to unverified.'
         messages.info(request, msg_text)
         return redirect(return_url)
-    return render(request, 'timepiece/entry/reject.html', {
+
+    context ={
         'entry': entry,
         'next': request.GET.get('next'),
-    })
+    }
+    return render(request, 'timepiece/entry/reject.html', context )
 
 
 @permission_required('entries.delete_entry')
@@ -310,9 +355,10 @@ def delete_entry(request, entry_id):
             message = 'You are not authorized to delete this entry!'
             messages.error(request, message)
 
-    return render(request, 'timepiece/entry/delete.html', {
+    context = {
         'entry': entry,
-    })
+    }
+    return render(request, 'timepiece/entry/delete.html', context )
 
 
 class ScheduleMixin(object):
@@ -403,7 +449,7 @@ class ScheduleView(ScheduleMixin, TemplateView):
             'project_hours': project_hours,
             'projects': projects
         })
-        return context
+        return context.fla
 
 
 class EditScheduleView(ScheduleMixin, TemplateView):

@@ -17,6 +17,8 @@ class ActivityLookup(ModelLookup):
             if project and project.activity_group:
                 return project.activity_group.activities.all().filter(name__icontains=term)
         return results
+        print ("result is")
+        print (result)
 
     def get_item_label(self, item):
         return u"%s" % (item.name)

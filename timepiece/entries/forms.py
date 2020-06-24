@@ -24,6 +24,9 @@ class ClockInForm(forms.ModelForm):
         model = Entry
         fields = ('active_comment', 'location', 'project', 'activity',
                   'start_time', 'comments')
+        # widgets = {
+        #     'activity': selectable.AutoComboboxSelectWidget(lookup_class=ActivityLookup),
+        # }
         widgets = {
             'activity': selectable.AutoComboboxSelectWidget(lookup_class=ActivityLookup),
         }
@@ -34,14 +37,27 @@ class ClockInForm(forms.ModelForm):
 
         initial = kwargs.get('initial', {})
         default_loc = utils.get_setting('TIMEPIECE_DEFAULT_LOCATION_SLUG')
+
+        #I AM ADDING THIS
+        default_proj = utils.get_setting('TIMEPIECE_DEFAULT_PROJECT_SLUG')
+
         if default_loc:
             try:
                 loc = Location.objects.get(slug=default_loc)
+                proj = Project.objects.get(slug=default_proj)
             except Location.DoesNotExist:
                 loc = None
-            if loc:
+            except Project.DoesNotExist:
+                proj=None
+
+            if loc and proj:
                 initial['location'] = loc.pk
+                initial['project'] = proj.pk
+            else:
+                initial['location'] = loc.pk
+                print ('make sure there is a default Project in your settings')
         project = initial.get('project', None)
+
         try:
             last_project_entry = Entry.objects.filter(
                 user=self.user, project=project).order_by('-end_time')[0]

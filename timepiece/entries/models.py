@@ -3,7 +3,13 @@ from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -74,14 +80,16 @@ class EntryQuerySet(models.query.QuerySet):
             "year": {"date": """DATE_TRUNC('year', end_time)"""},
         }
         basic_values = (
-            'user', 'date', 'user__first_name', 'user__last_name', 'billable',
+            # 'user', 'date', 'user__first_name', 'user__last_name', 'billable',
+            'user', 'date', 'user__name', 'billable',
         )
         extra_values = extra_values or ()
         qs = self.extra(select=select[key])
         qs = qs.values(*basic_values + extra_values)
         qs = qs.annotate(hours=Sum('hours')).order_by(
-            'user__last_name',
-            'user__first_name',
+            # 'user__last_name',
+            # 'user__first_name',
+            'user__name',
             'user__pk',
             'date')
         return qs
@@ -172,10 +180,10 @@ class Entry(models.Model):
         (NOT_INVOICED, 'Not Invoiced'),
     ))
 
-    user = models.ForeignKey(User, related_name='timepiece_entries')
-    project = models.ForeignKey('crm.Project', related_name='entries')
-    activity = models.ForeignKey(Activity, related_name='entries')
-    location = models.ForeignKey(Location, related_name='entries')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='timepiece_entries', on_delete=models.CASCADE)
+    project = models.ForeignKey('crm.Project', related_name='entries', on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, related_name='entries', on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, related_name='entries', on_delete=models.CASCADE)
     entry_group = models.ForeignKey(
         'contracts.EntryGroup', blank=True, null=True, related_name='entries',
         on_delete=models.SET_NULL)
@@ -523,8 +531,8 @@ class Entry(models.Model):
 @python_2_unicode_compatible
 class ProjectHours(models.Model):
     week_start = models.DateField(verbose_name='start of week')
-    project = models.ForeignKey('crm.Project')
-    user = models.ForeignKey(User)
+    project = models.ForeignKey('crm.Project', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     hours = models.DecimalField(
         max_digits=11, decimal_places=5, default=0,
         validators=[validators.MinValueValidator(Decimal("0.00001"))])

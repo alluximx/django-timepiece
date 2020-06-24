@@ -19,6 +19,16 @@ urlpatterns = [
         views.toggle_pause,
         name='toggle_pause'),
 
+
+    #i added this
+    url(r'^entry/quick_clock_in/$',
+        views.clock_in,
+        name='quickclock_in'),
+    url(r'^entry/quick_clock_out/$',
+        views.clock_out,
+        name='quickclock_out'),
+
+
     # Entries
     url(r'^entry/add/$',
         views.create_edit_entry,

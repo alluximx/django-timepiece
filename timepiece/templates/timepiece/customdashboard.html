@@ -1,0 +1,138 @@
+
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+
+  {% load staticfiles %}
+  {% load thumbnail %}
+  {% load crispy_forms_tags %}
+
+
+      <!-- Bootstrap core CSS -->
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+
+  <!-- CSS specific to pinentry -->
+  <link rel="stylesheet" href="{% static 'CustomDashboard/css/customdash.css' %}">
+
+
+ <input type="hidden" name="useremail" id="id_useremail" value={{username }}>
+
+
+    <div class="pin" id="pin" name="pincode">
+        <div class="frame1" >
+            <div class="img-profilepic">
+                {% if user_status == "on_pause" %}
+                    <img class="img-profilepic border-orange" src="{% thumbnail show_user.profile.picture|default:'default_profile.png' 140x140 crop %}"/>
+                {% elif user_status == "on_clock" %}
+                    <img class="img-profilepic border-green" src="{% thumbnail show_user.profile.picture|default:'default_profile.png' 140x140 crop %}"/>
+                {% else %}
+                    <img class="img-profilepic border-red" src="{% thumbnail show_user.profile.picture|default:'default_profile.png' 140x140 crop %}"/>
+                {% endif %}
+                </div>
+          <div class="employeeName">{{show_user.name}}</div>
+    </div>
+
+    <div class="buttons">
+        {% if perms.entries.can_clock_in %}
+            <div class="row-fluid">
+                <div class="span12" id="active-entry">
+                    <div id="active-buttons">
+                        <div class="pull-left">
+                            {% if not active_entry %}
+<!--                                <a class="btn btn-primary" href="{% url 'clock_in' %}">Clock In</a>-->
+                                <a class="btn btn-success" href="{% url 'quickclock_in' %}">Quick Clock In</a>
+                            {% endif %}
+                            {% if active_entry %}
+<!--                                <a class="btn btn-primary" href="{% url 'clock_out' %}">Clock Out</a>-->
+                                <a class="btn btn-danger" href="{% url 'quickclock_out' %}">Quick Clock Out</a>
+                                <a class="btn btn-{% if active_entry.is_paused %}success{% else %}warning{% endif %} prevent-doubleclick"
+                                        href="{% url 'toggle_pause' %}">
+                                    {% if active_entry.is_paused %}
+                                        Resume
+                                    {% else %}
+                                        Pause
+                                    {% endif %}
+                                </a>
+<!--                                <a class="btn btn-primary" href="{% url 'edit_entry' active_entry.pk %}">Edit</a>-->
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+
+
+
+    <div class="timeClock">
+        <div class="timeDisplay">
+            <h2 class="currentTime" id="clock">{{time_now|time:"H:i:s"}}</h2>
+            <h2 class="currentDate" id="date">{{time_now|date}}</h2>
+        </div>
+    </div>
+
+
+
+
+
+
+
+    <div class="clearfix">
+        <div id="active-text">
+            {% if active_entry %}
+                You have been clocked into
+                <strong>{{ active_entry.activity.name }} for {{ active_entry.project }}</strong>
+                since {{ active_entry.start_time|time }}
+                {% ifnotequal active_entry.start_time.date today %}
+
+                {% if active_entry.start_time.date < week_start or active_entry.start_time.date > week_end %}
+                    on {{ active_entry.start_time|date:'M j' }}
+                {% else %}
+                    on {{ active_entry.start_time|date:"l" }}
+                {% endif %}
+
+                {% endifnotequal %}
+                    ({{ active_entry.get_total_seconds }} time clocked{% if active_entry.seconds_paused or active_entry.is_paused %} and {{ active_entry.get_paused_seconds }} paused{% endif %}).
+                {% if active_entry.comments %}
+                    <a class="btn btn-primary btn-mini" data-toggle="popover"
+                       data-html="true"
+                       title="Active Entry Comment"
+                       data-content="{{ active_entry.comments|linebreaks }}"
+                       data-placement="bottom"
+                       data-container="body">
+                        <i class="icon-white icon-comment"></i>
+                    </a>
+                {% endif %}
+
+                            {% else %}
+                                You are not currently clocked into a project.
+                                {{message}}
+                            {% endif %}
+
+
+        {% endif %}
+            </div>
+        </div>
+</div>
+
+
+  {% csrf_token %}
+   <!-- javascipt specific to pinentry -->
+    <script src="{% static 'site/js/jquery-3.4.1.js' %}"></script>
+        <script src="{% static 'CustomDashboard/js/dashboard.js' %}"></script>
+  <script src="{% static 'CustomDashboard/js/customdash.js' %}"></script>
+
+
+
+
+

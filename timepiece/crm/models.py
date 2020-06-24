@@ -1,13 +1,17 @@
 from collections import OrderedDict
 
 from django.apps import apps
-from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+# from django.contrib.auth.models import User
+#from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-
 from timepiece.utils import get_active_entry
 
+#i added this to
+from django.conf import settings
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 # Add a utility method to the User class that will tell whether or not a
 # particular user has any unclosed entries
@@ -26,7 +30,7 @@ User.add_to_class('get_absolute_url', _get_absolute_url)
 
 @python_2_unicode_compatible
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, unique=True, related_name='profile')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, unique=True, related_name='timepieceprofile', on_delete=models.CASCADE)
     hours_per_week = models.DecimalField(
         max_digits=8, decimal_places=2, default=40)
 
@@ -34,7 +38,7 @@ class UserProfile(models.Model):
         db_table = 'timepiece_userprofile'  # Using legacy table name.
 
     def __str__(self):
-        return self.user
+        return self.user.name
 
 
 class TypeAttributeManager(models.Manager):
@@ -128,23 +132,24 @@ class Project(models.Model):
     tracker_url = models.CharField(
         max_length=255, blank=True, null=False, default="")
     business = models.ForeignKey(
-        Business, related_name='new_business_projects')
-    point_person = models.ForeignKey(User, limit_choices_to={'is_staff': True})
+        Business, related_name='new_business_projects', on_delete=models.CASCADE)
+    point_person = models.ForeignKey(settings.AUTH_USER_MODEL, limit_choices_to={'is_staff': True}, on_delete=models.CASCADE)
     users = models.ManyToManyField(
         User, related_name='user_projects', through='ProjectRelationship')
     activity_group = models.ForeignKey(
         'entries.ActivityGroup', related_name='activity_group', null=True,
-        blank=True, verbose_name='restrict activities to')
+        blank=True, verbose_name='restrict activities to', on_delete=models.CASCADE)
     type = models.ForeignKey(
         Attribute, limit_choices_to={'type': 'project-type'},
-        related_name='projects_with_type')
+        related_name='projects_with_type', on_delete=models.CASCADE)
     status = models.ForeignKey(
         Attribute, limit_choices_to={'type': 'project-status'},
-        related_name='projects_with_status')
+        related_name='projects_with_status', on_delete=models.CASCADE)
     description = models.TextField()
 
     objects = models.Manager()
     trackable = TrackableProjectManager()
+    slug = models.CharField(max_length=255, unique=True)
 
     class Meta:
         db_table = 'timepiece_project'  # Using legacy table name.
@@ -189,8 +194,8 @@ class RelationshipType(models.Model):
 class ProjectRelationship(models.Model):
     types = models.ManyToManyField(
         RelationshipType, blank=True, related_name='project_relationships')
-    user = models.ForeignKey(User, related_name='project_relationships')
-    project = models.ForeignKey(Project, related_name='project_relationships')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_relationships', on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, related_name='project_relationships', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'timepiece_projectrelationship'  # Using legacy table name.

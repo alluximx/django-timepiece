@@ -100,3 +100,18 @@ def get_year_start(day=None):
 def to_datetime(date):
     """Transforms a date or datetime object into a date object."""
     return datetime.datetime(date.year, date.month, date.day)
+
+
+#i added tihs
+def get_user_status(user):
+    entries = apps.get_model('entries', 'Entry').no_join
+    clocked_entries = entries.filter(end_time__isnull=True, pause_time__isnull=True).select_related('user').values_list('user__id', flat=True)
+    paused_entries = entries.filter(pause_time__isnull=False).select_related('user').values_list('user__id', flat=True)
+    status = None
+    if user in clocked_entries:
+        status ='on_clock'
+    elif user in paused_entries:
+        status ='on_pause'
+    else:
+        status ='off_clock'
+    return status

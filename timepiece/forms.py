@@ -3,12 +3,15 @@ from dateutil.relativedelta import relativedelta
 import time
 
 from django import forms
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 
 from timepiece.fields import UserModelChoiceField
 
 from timepiece.entries.models import Entry
 
+# i added this
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 DATE_FORM_FORMAT = '%Y-%m-%d'
 INPUT_FORMATS = [DATE_FORM_FORMAT]
