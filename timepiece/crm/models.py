@@ -5,7 +5,7 @@ from django.apps import apps
 #from django.core.urlresolvers import reverse
 from django.urls import reverse
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
+from six import python_2_unicode_compatible
 from timepiece.utils import get_active_entry
 
 #i added this to
