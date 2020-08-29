@@ -18,7 +18,7 @@ from django.db import models
 from django.db.models import Sum
 from django.db.models.expressions import F, Func, Value
 from django.template.loader import render_to_string
-from django.utils.encoding import python_2_unicode_compatible
+from six import python_2_unicode_compatible
 
 from timepiece import utils
 from timepiece.entries.models import Entry
